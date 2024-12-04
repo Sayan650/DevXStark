@@ -68,6 +68,7 @@ import EventNode from './EventNode'
 import LiquidityNode from './LiquidityNode'
 import StakeNode from './StakeNode'
 import SwapNode from './SwapNode'
+import { MenuSystem } from '../floatingWindow/MenuSystem'
 
 // Define the different block types with their properties
 const blockTypes = [
@@ -414,13 +415,19 @@ function Web3BlocksComponent() {
   }, [])
 
   return (
-    <div className="flex h-screen bg-[#141313] pt-8 selectable-none">
+    <div className="flex h-screen bg-[#141313] pt-8 selectable-none relative">
       {/* Main canvas area */}
+      <div className='absolute z-10 left-10'>
+        <MenuSystem />
+      </div>
+
       <motion.div
         className="flex-1 w-full flex flex-col ml-8"
         animate={{ marginLeft: isOpen ? "1rem" : "2rem" }}
         transition={{ duration: 0.3 }}
       >
+        {/* <div className="w-20 h-20 bg-gray-100"> */}
+        {/* </div>  */}
         {/* Header */}
         <div className="flex justify-between items-center mt-4 mb-4">
           <div className="flex items-center gap-4 ml-8">
@@ -431,22 +438,35 @@ function Web3BlocksComponent() {
                 checked={tutorialMode}
                 onCheckedChange={setTutorialMode}
               />
-              <Label htmlFor="tutorial-mode" className="text-white">Toggle Hover</Label>
+              <Label htmlFor="tutorial-mode" className="text-white">
+                Toggle Hover
+              </Label>
             </div>
           </div>
           <div className="flex gap-2">
             {showClearButton && (
-              <Button onClick={handleClear} className="px-6 bg-[#252525] hover:bg-[#323232] text-white">
+              <Button
+                onClick={handleClear}
+                className="px-6 bg-[#252525] hover:bg-[#323232] text-white"
+              >
                 Clear
               </Button>
             )}
             {showFinishButton && (
               <Button
                 onClick={() => {
-                  const encodedNodes = encodeURIComponent(JSON.stringify(nodes));
-                  const encodedEdges = encodeURIComponent(JSON.stringify(edges));
-                  const encodedFlowSummary = encodeURIComponent(JSON.stringify(flowSummary));
-                  router.push(`/compile?nodes=${encodedNodes}&edges=${encodedEdges}&flowSummary=${encodedFlowSummary}`);
+                  const encodedNodes = encodeURIComponent(
+                    JSON.stringify(nodes)
+                  );
+                  const encodedEdges = encodeURIComponent(
+                    JSON.stringify(edges)
+                  );
+                  const encodedFlowSummary = encodeURIComponent(
+                    JSON.stringify(flowSummary)
+                  );
+                  router.push(
+                    `/compile?nodes=${encodedNodes}&edges=${encodedEdges}&flowSummary=${encodedFlowSummary}`
+                  );
                 }}
                 className="bg-[#322131] hover:bg-[#21173E] text-white"
               >
@@ -457,7 +477,10 @@ function Web3BlocksComponent() {
         </div>
 
         {/* Canvas */}
-        <div id="block-canvas" className="flex-1 rounded-lg shadow-inner p-4 min-h-[200px]  overflow-hidden bg-transparent">
+        <div
+          id="block-canvas"
+          className="flex-1 rounded-lg shadow-inner p-4 min-h-[200px]  overflow-hidden bg-transparent"
+        >
           <ReactFlow
             nodes={nodes}
             edges={edges}
@@ -468,7 +491,7 @@ function Web3BlocksComponent() {
             onReconnectStart={onReconnectStart}
             onReconnectEnd={onReconnectEnd}
             nodeTypes={nodeTypes}
-            defaultEdgeOptions={{ type: 'step' }}
+            defaultEdgeOptions={{ type: "step" }}
             snapToGrid={true}
             snapGrid={[15, 15]}
             isValidConnection={isValidConnection}
@@ -484,7 +507,8 @@ function Web3BlocksComponent() {
                 source={edge.source}
                 target={edge.target}
                 style={
-                  selectedNode && (edge.source === selectedNode || edge.target === selectedNode)
+                  selectedNode &&
+                  (edge.source === selectedNode || edge.target === selectedNode)
                     ? edgeStyles.selected
                     : edgeStyles.default
                 }
@@ -493,9 +517,8 @@ function Web3BlocksComponent() {
           </ReactFlow>
         </div>
       </motion.div>
-
     </div>
-  )
+  );
 }
 
 // Wrap the main component with ReactFlowProvider
