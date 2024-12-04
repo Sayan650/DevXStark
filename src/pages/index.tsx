@@ -3,7 +3,6 @@ import { Header } from "../components/dashboard/Header";
 import { Stats } from "../components/dashboard/Stats";
 import { Sidebar } from "../components/layout/Sidebar";
 
-
 export default function Home() {
   {
     return (
