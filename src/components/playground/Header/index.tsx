@@ -19,11 +19,11 @@ export default function Header({ showClearButton, showFinishButton, handleClear,
                         onChange={(e) => setText(e.target.value)}
                         onBlur={() => setIsEditing(false)}
                         onKeyDown={(e) => e.key === "Enter" && setIsEditing(false)}
-                        className="text-2xl text-white bg-transparent outline-none border-b border-white"
+                        className="text-2xl text-black font-semibold bg-transparent outline-none border-b border-white"
                         autoFocus
                     />
                 ) : (
-                    <h2 className="text-2xl text-white cursor-pointer" onClick={() => setIsEditing(true)}>
+                    <h2 className="text-2xl font-semibold text-black cursor-pointer" onClick={() => setIsEditing(true)}>
                         {text.length > 0 ? text : "Project Name"}
                     </h2>
                 )}
