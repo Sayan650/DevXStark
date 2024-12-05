@@ -1,7 +1,8 @@
-import Web3BlocksComponentWrapper from "@/components/canvas/whiteboard";
 // import { AgentsTable } from "../components/agents/AgentsTable";
 // import { Header } from "../components/dashboard/Header";
 // import { Stats } from "../components/dashboard/Stats";
+
+import BlocksPlayground from "../components/playground/index";
 
 export default function Home() {
   {
@@ -15,7 +16,7 @@ export default function Home() {
           <div className="bg-white/5 backdrop-blur-lg rounded-xl p-6">
             <AgentsTable />
           </div> */}
-          <Web3BlocksComponentWrapper/>
+          <BlocksPlayground />
         </main>
       </div>
     );
