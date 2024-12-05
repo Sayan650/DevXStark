@@ -27,12 +27,13 @@ import ReactFlow, {
 import 'reactflow/dist/style.css'
 import { toast } from 'sonner'
 import { z } from 'zod'
-import BlockNode from './BlockNode'
-import EventNode from './EventNode'
+import BlockNode from './Blocknode'
+import EventNode from './Blocknode/EventNode'
 import FloatingSidebar from './floatingWindow/FloatingSidebar'
-import LiquidityNode from './LiquidityNode'
-import StakeNode from './StakeNode'
-import SwapNode from './SwapNode'
+import LiquidityNode from './Blocknode/LiquidityNode'
+import StakeNode from './Blocknode/StakeNode'
+import SwapNode from './Blocknode/SwapNode'
+import Header from './Header'
 
 // Define nodeTypes outside of the component
 const nodeTypes = {
@@ -48,7 +49,7 @@ const formSchema = z.object({
   solidityCode: z.string().min(1, "Solidity code is required"),
 })
 // Main component for the DeFi Blocks builder
-export default function Canvas() {
+export default function Playground() {
   // State variables
   const [showFinishButton, setShowFinishButton] = useState(false)
   const [isOpen, setIsOpen] = useState(true)
@@ -181,52 +182,7 @@ export default function Canvas() {
         transition={{ duration: 0.3 }}
       >
         {/* Header */}
-        <div className="flex justify-between items-center mt-4 mb-4">
-          <div className="flex items-center gap-4 ml-8">
-            <h2 className="text-2xl text-white mt-1">Project Name</h2>
-            <div className="ml-7 mt-2 flex items-center space-x-2 justify-center">
-              <Switch
-                id="tutorial-mode"
-                checked={tutorialMode}
-                onCheckedChange={setTutorialMode}
-              />
-              <Label htmlFor="tutorial-mode" className="text-white">
-                Toggle Hover
-              </Label>
-            </div>
-          </div>
-          <div className="flex gap-2">
-            {showClearButton && (
-              <Button
-                onClick={handleClear}
-                className="px-6 bg-[#252525] hover:bg-[#323232] text-white"
-              >
-                Clear
-              </Button>
-            )}
-            {showFinishButton && (
-              <Button
-                onClick={() => {
-                  const encodedNodes = encodeURIComponent(
-                    JSON.stringify(nodes)
-                  );
-                  const encodedEdges = encodeURIComponent(
-                    JSON.stringify(edges)
-                  );
-                  const encodedFlowSummary = encodeURIComponent(
-                    JSON.stringify(flowSummary)
-                  );
-                  router.push(
-                    `/compile?nodes=${encodedNodes}&edges=${encodedEdges}&flowSummary=${encodedFlowSummary}`
-                  );
-                }}
-                className="bg-[#322131] hover:bg-[#21173E] text-white"
-              >
-                Compile
-              </Button>
-            )}
-          </div>
-        </div>
+        <Header showClearButton={showClearButton} showFinishButton={showFinishButton} handleClear={handleClear} nodes={nodes} edges={edges} flowSummary={flowSummary} />
 
         {/* Canvas */}
         <div

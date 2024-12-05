@@ -5,7 +5,7 @@ import {
   SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
-//   SidebarGroupLabel,
+  //   SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -15,7 +15,7 @@ import {
 const items = [
   {
     title: "Home",
-    url: "#",
+    url: "",
     icon: Home,
   },
   {
