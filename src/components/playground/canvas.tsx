@@ -172,7 +172,7 @@ export default function Canvas() {
       {/* Main canvas area */}
       {/* Floating Sidebar */}
       <div className='absolute z-10 left-10 my-20 h-auto'>
-        <FloatingSidebar />
+        <FloatingSidebar addBlock={addBlock} />
       </div>
 
       <motion.div
@@ -346,7 +346,7 @@ export default function Canvas() {
         block.id === 'swap' ? 'swapNode' :
           block.id === 'liquidity' ? 'liquidityNode' :
             block.id === 'event' ? 'eventNode' : 'blockNode',
-      position: { x: 100, y: 100 + nodes.length * 100 },
+      position: { x: 500, y: 100 + nodes.length * 100 },
       data: {
         ...block,
         onNodeClick: handleNodeClick,
