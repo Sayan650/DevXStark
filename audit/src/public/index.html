@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Starknet Contract Auditor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-2xl">
+        <h1 class="text-2xl font-bold mb-6 text-center">Starknet Smart Contract Auditor</h1>
+        <form id="auditForm" class="space-y-4">
+            <textarea 
+                id="contractCode" 
+                rows="10" 
+                class="w-full p-2 border rounded-md" 
+                placeholder="Paste your Cairo smart contract code here..."
+            ></textarea>
+            <button 
+                type="submit" 
+                class="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition"
+            >
+                Audit Contract
+            </button>
+        </form>
+        <div id="reportContainer" class="mt-6 hidden">
+            <h2 class="text-xl font-semibold mb-4">Audit Report</h2>
+            <pre id="reportContent" class="bg-gray-50 p-4 rounded-md overflow-auto"></pre>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('auditForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const contractCode = document.getElementById('contractCode').value;
+            const reportContainer = document.getElementById('reportContainer');
+            const reportContent = document.getElementById('reportContent');
+
+            try {
+                const response = await fetch('/audit', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ contractCode })
+                });
+
+                const result = await response.json();
+                
+                reportContainer.classList.remove('hidden');
+                reportContent.textContent = JSON.stringify(result.report, null, 2);
+            } catch (error) {
+                reportContainer.classList.remove('hidden');
+                reportContent.textContent = `Error: ${error.message}`;
+            }
+        });
+    </script>
+</body>
+</html>
