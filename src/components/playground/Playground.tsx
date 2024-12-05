@@ -1,19 +1,9 @@
-import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-// UI components and utilities
-import { Button } from "@/components/ui/button"
-import { Label } from "@/components/ui/label"
-import { Switch } from "@/components/ui/switch"
-
-
 // Third-party libraries
-import { zodResolver } from "@hookform/resolvers/zod"
 import { motion } from "framer-motion"
 import {
-  Code
 } from 'lucide-react'
-import { useForm } from "react-hook-form"
 import ReactFlow, {
   Background,
   BaseEdge,
@@ -26,7 +16,6 @@ import ReactFlow, {
 } from 'reactflow'
 import 'reactflow/dist/style.css'
 import { toast } from 'sonner'
-import { z } from 'zod'
 import BlockNode from './Blocknode'
 import EventNode from './Blocknode/EventNode'
 import FloatingSidebar from './floatingWindow/FloatingSidebar'
@@ -44,33 +33,20 @@ const nodeTypes = {
   eventNode: EventNode,
 }
 // Form validation schema using Zod
-const formSchema = z.object({
-  blockName: z.string().min(1, "Block name is required"),
-  solidityCode: z.string().min(1, "Solidity code is required"),
-})
+
 // Main component for the DeFi Blocks builder
 export default function Playground() {
   // State variables
   const [showFinishButton, setShowFinishButton] = useState(false)
   const [isOpen, setIsOpen] = useState(true)
-  const [isCredenzaOpen, setIsCredenzaOpen] = useState(false)
-  const [tutorialMode, setTutorialMode] = useState(false)
   const [nodes, setNodes, onNodesChange] = useNodesState([])
   const [edges, setEdges, onEdgesChange] = useEdgesState([])
   const [flowSummary, setFlowSummary] = useState([])
-  const router = useRouter()
   const [showClearButton, setShowClearButton] = useState(false)
   const edgeReconnectSuccessful = useRef(true)
   const [selectedNode, setSelectedNode] = useState(null)
 
-  // Initialize the form
-  const form = useForm({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      blockName: "",
-      solidityCode: "",
-    },
-  })
+
 
   // Effect to check if 'start' and 'end' nodes are present
   useEffect(() => {
@@ -171,7 +147,7 @@ export default function Playground() {
   return (
     <div className="flex h-screen bg-[#141313] pt-8 selectable-none relative">
       {/* Main canvas area */}
-      {/* Floating Sidebar */}
+      {/* h Sidebar */}
       <div className='absolute z-10 left-10 my-20 h-auto'>
         <FloatingSidebar addBlock={addBlock} />
       </div>
@@ -268,22 +244,7 @@ export default function Playground() {
   }
 
   // Form submission handler for adding a custom block
-  function onSubmit(values) {
-    const newCustomBlock = {
-      id: 'custom',
-      content: values.blockName,
-      color: 'bg-[#3C3C3C]',
-      borderColor: 'border-[#6C6C6C]',
-      hoverBorderColor: 'hover:border-[#9C9C9C]',
-      icon: Code,
-      code: values.solidityCode,
-    }
 
-    addBlock(newCustomBlock)
-    setIsCredenzaOpen(false)
-    form.reset()
-    toast.success('Custom block added!')
-  }
 
   // Function to clear the canvas
   function handleClear() {

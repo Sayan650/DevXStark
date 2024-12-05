@@ -1,14 +1,18 @@
 import React, { useState } from 'react'
 import { Button } from "@/components/ui/button"
 import router from "next/router"
+import Compile from '../Modal/Compile';
+import { TypeOf, ZodObject, ZodString, ZodTypeAny } from 'zod';
+import { toast } from 'sonner';
 
 export default function Header({ showClearButton, showFinishButton, handleClear, nodes, edges, flowSummary }) {
     const [isEditing, setIsEditing] = useState(false); // To track if we are editing
     const [text, setText] = useState("Project Name");
+    const [isCompileModalOpen, setIsCompileModalOpen] = useState(false);
+
     return (
-        <div className="flex justify-between items-center mt-4 mb-4">
+        <div className="flex justify-between items-center m-4">
             <div className="flex items-center gap-4 ml-8">
-                {/* <h2 className="text-2xl text-white mt-1">Project Name</h2> */}
                 {isEditing ? (
                     <input
                         type="text"
@@ -35,27 +39,31 @@ export default function Header({ showClearButton, showFinishButton, handleClear,
                     </Button>
                 )}
                 {showFinishButton && (
-                    <Button
-                        onClick={() => {
-                            const encodedNodes = encodeURIComponent(
-                                JSON.stringify(nodes)
-                            );
-                            const encodedEdges = encodeURIComponent(
-                                JSON.stringify(edges)
-                            );
-                            const encodedFlowSummary = encodeURIComponent(
-                                JSON.stringify(flowSummary)
-                            );
-                            router.push(
-                                `/compile?nodes=${encodedNodes}&edges=${encodedEdges}&flowSummary=${encodedFlowSummary}`
-                            );
-                        }}
-                        className="bg-[#322131] hover:bg-[#21173E] text-white"
-                    >
-                        Compile
-                    </Button>
+                    // <Button
+                    //     onClick={() => {
+                    //         const encodedNodes = encodeURIComponent(
+                    //             JSON.stringify(nodes)
+                    //         );
+                    //         const encodedEdges = encodeURIComponent(
+                    //             JSON.stringify(edges)
+                    //         );
+                    //         const encodedFlowSummary = encodeURIComponent(
+                    //             JSON.stringify(flowSummary)
+                    //         );
+                    //         router.push(
+                    //             `/compile?nodes=${encodedNodes}&edges=${encodedEdges}&flowSummary=${encodedFlowSummary}`
+                    //         );
+                    //     }}
+                    //     className="bg-[#322131] hover:bg-[#21173E] text-white"
+                    // >
+                    //     Compile
+                    // </Button>
+                    <Compile isOpen={isCompileModalOpen} onOpenChange={setIsCompileModalOpen} onSubmit={onSubmitCompile} flowSummary={flowSummary} />
                 )}
             </div>
         </div>
     )
+    function onSubmitCompile(values) {
+        toast.success('Custom block added successfully')
+    }
 }

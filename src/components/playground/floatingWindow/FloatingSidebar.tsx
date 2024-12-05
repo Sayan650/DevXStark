@@ -1,7 +1,27 @@
+import { useState } from "react";
+import CustomBlock from "../Modal/CustomBlock";
 import groupedBlocks from "./data";
+import { Code } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod"
+import { z } from "zod";
+import { toast } from 'sonner'
 
 export default function FloatingSidebar({ addBlock }) {
+  const [isCustomModalOpen, setIsCustomModalOpen] = useState(false);
 
+  const formSchema = z.object({
+    blockName: z.string().min(1, "Block name is required"),
+    solidityCode: z.string().min(1, "Solidity code is required"),
+  })
+
+  const form = useForm({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      blockName: "",
+      solidityCode: "",
+    },
+  })
   return (
     <div className="flex">
       <div className="bg-gray-900 p-4 text-white ">
@@ -28,16 +48,11 @@ export default function FloatingSidebar({ addBlock }) {
               </div>
             </div>
           ))}
+          <CustomBlock isOpen={isCustomModalOpen}
+            onOpenChange={setIsCustomModalOpen}
+            onSubmitCustomBlock={onSubmitCustomBlock}
+          />
         </div>
-        {/* <div className="mb-4">
-          <h3 className="text-sm text-gray-400 mb-2">Layers</h3>
-          <div className="flex gap-2 flex-wrap">
-            <button className="w-8 h-8 rounded flex items-center justify-center transition-colors text-gray-400 hover:bg-gray-700">↓</button>
-            <button className="w-8 h-8 rounded flex items-center justify-center transition-colors text-gray-400 hover:bg-gray-700">↑</button>
-            <button className="w-8 h-8 rounded flex items-center justify-center transition-colors text-gray-400 hover:bg-gray-700">⊤</button>
-            <button className="w-8 h-8 rounded flex items-center justify-center transition-colors text-gray-400 hover:bg-gray-700">⊥</button>
-          </div>
-        </div> */}
       </div>
 
       <div className="flex-1 bg-gray-800">
@@ -45,4 +60,21 @@ export default function FloatingSidebar({ addBlock }) {
       </div>
     </div>
   );
+
+  function onSubmitCustomBlock(values) {
+    const newCustomBlock = {
+      id: 'custom',
+      content: values.blockName,
+      color: 'bg-[#3C3C3C]',
+      borderColor: 'border-[#6C6C6C]',
+      hoverBorderColor: 'hover:border-[#9C9C9C]',
+      icon: Code,
+      code: values.solidityCode,
+    }
+
+    addBlock(newCustomBlock)
+    setIsCustomModalOpen(false)
+    form.reset()
+    toast.success('Custom block added successfully')
+  }
 };

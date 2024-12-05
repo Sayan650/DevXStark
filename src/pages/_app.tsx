@@ -6,11 +6,11 @@ import { AppSidebar } from "@/components/app-sidebar"
 export default function App({ Component, pageProps }: AppProps) {
   return (
     <>
-    <SidebarProvider>
-      <AppSidebar />
-      {/* <SidebarTrigger /> */}
-      <Component {...pageProps} />
-    </SidebarProvider>
-      </>
+      <div vaul-drawer-wrapper="" className="bg-background">
+        <SidebarProvider>
+          <AppSidebar />
+          <Component {...pageProps} />
+        </SidebarProvider></div>
+    </>
   );
 }
