@@ -1,14 +1,13 @@
 import React, { useState } from 'react'
 import { Button } from "@/components/ui/button"
-import router from "next/router"
 import Compile from '../Modal/Compile';
-import { TypeOf, ZodObject, ZodString, ZodTypeAny } from 'zod';
 import { toast } from 'sonner';
 
-export default function Header({ showClearButton, showFinishButton, handleClear, nodes, edges, flowSummary }) {
+export default function Header({ showClearButton, showFinishButton, handleClear, nodes, edges, flowSummary, selectedNode, handleDelete }) {
     const [isEditing, setIsEditing] = useState(false); // To track if we are editing
     const [text, setText] = useState("Project Name");
     const [isCompileModalOpen, setIsCompileModalOpen] = useState(false);
+    const showDeleteButton = !!selectedNode;
 
     return (
         <div className="flex justify-between items-center m-4">
@@ -30,6 +29,14 @@ export default function Header({ showClearButton, showFinishButton, handleClear,
                 )}
             </div>
             <div className="flex gap-2">
+                {showDeleteButton && (
+                    <Button
+                        onClick={() => handleDelete(selectedNode)}
+                        className="px-6 bg-[#252525] hover:bg-[#323232] text-white"
+                    >
+                        Delete node
+                    </Button>
+                )}
                 {showClearButton && (
                     <Button
                         onClick={handleClear}

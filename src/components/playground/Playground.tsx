@@ -158,7 +158,7 @@ export default function Playground() {
         transition={{ duration: 0.3 }}
       >
         {/* Header */}
-        <Header showClearButton={showClearButton} showFinishButton={showFinishButton} handleClear={handleClear} nodes={nodes} edges={edges} flowSummary={flowSummary} />
+        <Header showClearButton={showClearButton} showFinishButton={showFinishButton} handleClear={handleClear} nodes={nodes} edges={edges} flowSummary={flowSummary} selectedNode={selectedNode} handleDelete={handleDeleteNode} />
 
         {/* Canvas */}
         <div
