@@ -145,10 +145,10 @@ export default function Playground() {
   }, [])
 
   return (
-    <div className="flex h-screen bg-[#141313] pt-8 selectable-none relative">
+    <div className="flex h-screen bg-[#f9f7f3] text-black pt-8 selectable-none relative">
       {/* Main canvas area */}
       {/* h Sidebar */}
-      <div className='absolute z-10 left-10 my-20 h-auto'>
+      <div className='absolute z-10 left-10 my-20 h-auto max-h-72'>
         <FloatingSidebar addBlock={addBlock} />
       </div>
 
@@ -158,7 +158,7 @@ export default function Playground() {
         transition={{ duration: 0.3 }}
       >
         {/* Header */}
-        <Header showClearButton={showClearButton} showFinishButton={showFinishButton} handleClear={handleClear} nodes={nodes} edges={edges} flowSummary={flowSummary} />
+        <Header showClearButton={showClearButton} showFinishButton={showFinishButton} handleClear={handleClear} nodes={nodes} edges={edges} flowSummary={flowSummary} selectedNode={selectedNode} handleDelete={handleDeleteNode} />
 
         {/* Canvas */}
         <div

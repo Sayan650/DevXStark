@@ -23,12 +23,12 @@ export default function FloatingSidebar({ addBlock }) {
     },
   })
   return (
-    <div className="flex">
-      <div className="bg-gray-900 p-4 text-white ">
+    <div className="flex max-w-36 max-h-[50rem] rounded-lg drop-shadow-2xl">
+      <div className="bg-[#faf3dd] p-4 text-white rounded-xl ">
         <div className="mt-4">
           {Object.entries(groupedBlocks).map(([category, blocks]) => (
             <div key={category} className="mb-2">
-              <h4 className="text-sm text-gray-400 my-4">{category}</h4>
+              <h4 className="text-sm text-gray-800 my-4">{category}</h4>
               <div className="flex gap-4 flex-wrap">
                 {blocks.map((block, index) => (
                   <button
