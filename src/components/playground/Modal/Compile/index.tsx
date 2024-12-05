@@ -11,7 +11,7 @@ import {
 export default function Compile({ isOpen, onOpenChange, onSubmit, flowSummary }) {
     const [selectedOption, setSelectedOption] = useState("");
     return (
-        <>
+        <div className='bg-black'>
             <Button
                 onClick={() => onOpenChange(true)}
                 className="bg-[#322131] hover:bg-[#21173E] text-white hoverEffect"
@@ -63,6 +63,6 @@ export default function Compile({ isOpen, onOpenChange, onSubmit, flowSummary })
                     </CredenzaBody>
                 </CredenzaContent>
             </Credenza>
-        </>
+        </div>
     )
 }
