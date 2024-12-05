@@ -1,5 +1,5 @@
 import { createAnthropicClient } from './anthropic-client';
-import { contractPromptTemplate } from './prompt-template';
+import { contractPromptTemplate } from './prompt-generate';
 import fs from 'fs/promises';
 import path from 'path';
 
