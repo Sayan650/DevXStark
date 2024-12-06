@@ -15,33 +15,49 @@ class StarknetContractAuditor {
                 messages: [
                     { 
                         role: "user", 
-                        content: `Carefully audit the following Starknet smart contract and provide a COMPLETE, VALID JSON response:\n\n${contractCode}`
+                        content: `Carefully audit the following Starknet smart contract and provide a STRICTLY FORMATTED JSON response:\n\n${contractCode}`
                     }
                 ]
             });
-
-            // Extract the response text
             const responseText = completion.content[0].text;
+            const extractJSON = (text) => {
+                const codeBlockMatch = text.match(/```json\n([\s\S]*?)```/);
+                if (codeBlockMatch) return codeBlockMatch[1].trim();
+                const bracketMatch = text.match(/\{[\s\S]*\}/);
+                if (bracketMatch) return bracketMatch[0].trim();
+                const cleanedText = text
+                    .replace(/^[^{]*/, '') 
+                    .replace(/[^}]*$/, '');
+                return cleanedText;
+            };
 
-            // Extract JSON from code block or plain text
-            const jsonMatch = responseText.match(/```json\n([\s\S]*?)```/);
-            const jsonContent = jsonMatch 
-                ? jsonMatch[1].trim() 
-                : responseText.trim();
-
-            // Parse and validate JSON
-            const parsedResult = JSON.parse(jsonContent);
-
-            // Validate required fields
-            if (!parsedResult.contract_name || !parsedResult.security_score) {
-                throw new Error('Invalid audit result structure');
+            const jsonContent = extractJSON(responseText);
+            let parsedResult;
+            try {
+                parsedResult = JSON.parse(jsonContent);
+            } catch (parseError) {
+                console.error("Raw response text:", responseText);
+                throw new Error(`JSON Parsing Failed: ${parseError.message}`);
             }
+            const requiredFields = [
+                'contract_name', 
+                'security_score', 
+                'original_contract_code', 
+                'corrected_contract_code', 
+                'vulnerabilities'
+            ];
+
+            requiredFields.forEach(field => {
+                if (!parsedResult[field]) {
+                    throw new Error(`Missing required field: ${field}`);
+                }
+            });
 
             return parsedResult;
         } catch (error) {
-            console.error("Audit parsing failed:", error);
-            console.error("Raw response:", completion.content[0].text);
-            throw new Error(`Contract audit parsing failed: ${error.message}`);
+            console.error("Audit parsing comprehensive error:", error);
+            console.error("Full response text:", completion.content[0].text);
+            throw error;
         }
     }
 }

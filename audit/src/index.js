@@ -1,3 +1,4 @@
+require('./suppress-warnings');
 const express = require('express');
 const bodyParser = require('body-parser');
 const path = require('path');
@@ -9,12 +10,10 @@ const ReportGenerator = require('./utils/reportGenerator');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Routes
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
@@ -25,8 +24,6 @@ app.post('/audit', async (req, res) => {
         const auditor = new StarknetContractAuditor(process.env.ANTHROPIC_API_KEY);
         
         const auditResult = await auditor.auditContract(contractCode);
-        
-        // Optional: Generate HTML report
         const reportHtml = ReportGenerator.generateHtmlReport(auditResult);
         
         res.json({
@@ -42,7 +39,6 @@ app.post('/audit', async (req, res) => {
     }
 });
 
-// Start server
 app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
 });

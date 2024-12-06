@@ -41,6 +41,8 @@ Output Format:
     contract_name: string,
     audit_date: string,
     security_score: number, // 0-100
+    original_contract_code: string,
+    corrected_contract_code: string,
     vulnerabilities: [
         {
             category: string,
@@ -52,7 +54,10 @@ Output Format:
     recommended_fixes: string[]
 }
 
-IMPORTANT: Provide concrete, implementable code fixes for each vulnerability.`;
+IMPORTANT: 
+- Provide the FULL corrected contract code, not just code snippets
+- Include concrete, implementable code fixes for each vulnerability
+- Explain all changes made in the corrected code`;
 };
 
 module.exports = {
