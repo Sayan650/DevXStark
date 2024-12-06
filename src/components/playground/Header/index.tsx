@@ -45,28 +45,7 @@ export default function Header({ showClearButton, showFinishButton, handleClear,
                         Clear
                     </Button>
                 )}
-                {showFinishButton && (
-                    // <Button
-                    //     onClick={() => {
-                    //         const encodedNodes = encodeURIComponent(
-                    //             JSON.stringify(nodes)
-                    //         );
-                    //         const encodedEdges = encodeURIComponent(
-                    //             JSON.stringify(edges)
-                    //         );
-                    //         const encodedFlowSummary = encodeURIComponent(
-                    //             JSON.stringify(flowSummary)
-                    //         );
-                    //         router.push(
-                    //             `/compile?nodes=${encodedNodes}&edges=${encodedEdges}&flowSummary=${encodedFlowSummary}`
-                    //         );
-                    //     }}
-                    //     className="bg-[#322131] hover:bg-[#21173E] text-white"
-                    // >
-                    //     Compile
-                    // </Button>
-                    <Compile isOpen={isCompileModalOpen} onOpenChange={setIsCompileModalOpen} onSubmit={onSubmitCompile} flowSummary={flowSummary} />
-                )}
+                <Compile isOpen={isCompileModalOpen} onOpenChange={setIsCompileModalOpen} onSubmit={onSubmitCompile} flowSummary={flowSummary} />
             </div>
         </div>
     )
