@@ -19,20 +19,27 @@ export default async function handler(
     }
 
     try {
-        const { requirements, contractName } = req.body;
-        
-        // Validate input
-        if (!requirements || !contractName) {
-            return res.status(400).json({ 
-                error: 'Missing required parameters: requirements and contractName are required' 
-            });
-        }
+        const { nodes, edges, flowSummary } = req.body;
 
+        console.log({ nodes, edges, flowSummary });
+
+        const flowSummaryJSON = {
+            nodes: nodes,
+            edges: edges,
+            summary: flowSummary
+        };
+
+        const bodyofthecall = JSON.stringify(flowSummaryJSON)
+            .replace(/[{}"]/g, '')
+            .replace(/:/g, ': ')
+            .replace(/,/g, ', ');
         // Create an instance of our contract generator
         const generator = new CairoContractGenerator();
-        
+        // console.log('bodyofthecall', bodyofthecall);
+
+
         // Generate the contract
-        const result = await generator.generateContract(requirements);
+        const result = await generator.generateContract(bodyofthecall);
 
         if (!result.success) {
             return res.status(500).json({
@@ -43,7 +50,7 @@ export default async function handler(
         // Save the generated contract
         const filePath = await generator.saveContract(
             result.sourceCode!,
-            contractName
+            'lib'
         );
 
         // Return success response

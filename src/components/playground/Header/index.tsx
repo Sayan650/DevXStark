@@ -45,11 +45,8 @@ export default function Header({ showClearButton, showFinishButton, handleClear,
                         Clear
                     </Button>
                 )}
-                {showFinishButton && <Compile isOpen={isCompileModalOpen} onOpenChange={setIsCompileModalOpen} onSubmit={onSubmitCompile} flowSummary={flowSummary} />}
+                {showFinishButton && <Compile nodes={nodes} edges={edges} isOpen={isCompileModalOpen} onOpenChange={setIsCompileModalOpen} flowSummary={flowSummary} />}
             </div>
         </div>
     )
-    function onSubmitCompile(values) {
-        toast.success('Custom block added successfully')
-    }
 }

@@ -1,7 +1,8 @@
 import React, { useState } from 'react'
 import { Button } from '../../../ui/button';
+import axios from 'axios';
 
-export default function GenerateCode({ flowSummary, setDisplayState }) {
+export default function GenerateCode({ nodes, edges, flowSummary, setDisplayState, setLoading, setSourceCode }) {
     const [selectedOption, setSelectedOption] = useState("");
 
     return (
@@ -39,7 +40,16 @@ export default function GenerateCode({ flowSummary, setDisplayState }) {
             </div>
         </>
     )
-    function generateCodeHandler() {
-        setDisplayState("contract")
+    async function generateCodeHandler() {
+        try {
+            setLoading(true)
+            const res = await axios.post('/api/generate-contract', { nodes, edges, flowSummary })
+            setSourceCode(res.data.sourceCode)
+            setLoading(false)
+            setDisplayState("contract")
+        } catch (error) {
+            console.log(error.message);
+        }
+
     }
 }
