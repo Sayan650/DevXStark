@@ -45,7 +45,7 @@ export default function Header({ showClearButton, showFinishButton, handleClear,
                         Clear
                     </Button>
                 )}
-                <Compile isOpen={isCompileModalOpen} onOpenChange={setIsCompileModalOpen} onSubmit={onSubmitCompile} flowSummary={flowSummary} />
+                {showFinishButton && <Compile isOpen={isCompileModalOpen} onOpenChange={setIsCompileModalOpen} onSubmit={onSubmitCompile} flowSummary={flowSummary} />}
             </div>
         </div>
     )

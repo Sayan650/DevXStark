@@ -45,7 +45,7 @@ export default function CustomBlock({ isOpen, onOpenChange, onSubmitCustomBlock 
 
   return (
     <>
-      <div className="pb-12 p-6 w-72">
+      <div className="pb-12 p-6 w-72 -mt-6">
         <Button
           onClick={() => onOpenChange(true)}
           className="bg-white hover:bg-whte hoverEffect text-black w-full"
