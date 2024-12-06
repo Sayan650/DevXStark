@@ -38,11 +38,11 @@ export default function FloatingSidebar({ addBlock }) {
                   >
                     {<block.icon size="20" />}
                     {/* Tooltip */}
-                    <span
-                      className="absolute top-10 left-1/2 transform -translate-x-1/3 whitespace-nowrap bg-black text-white text-xs px-2 py-1 rounded opacity-0 transition-opacity duration-300 group-hover:opacity-100 pointer-events-none"
+                    <div
+                      className="absolute top-10 left-1/2 transform -translate-x-1/3 whitespace-nowrap bg-black text-white text-xs px-2 py-1 rounded opacity-0 transition-opacity duration-300 group-hover:opacity-100 pointer-events-none z-10"
                     >
                       {block.content}
-                    </span>
+                    </div>
                   </button>
                 ))}
               </div>
