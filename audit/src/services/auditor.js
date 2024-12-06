@@ -19,30 +19,19 @@ class StarknetContractAuditor {
                     }
                 ]
             });
-
-            // Extract the response text
             const responseText = completion.content[0].text;
-
-            // Multiple strategies to extract JSON
             const extractJSON = (text) => {
-                // Try code block extraction
                 const codeBlockMatch = text.match(/```json\n([\s\S]*?)```/);
                 if (codeBlockMatch) return codeBlockMatch[1].trim();
-
-                // Try between first { and last }
                 const bracketMatch = text.match(/\{[\s\S]*\}/);
                 if (bracketMatch) return bracketMatch[0].trim();
-
-                // Last resort: try to clean and parse
                 const cleanedText = text
-                    .replace(/^[^{]*/, '')  // Remove everything before first {
-                    .replace(/[^}]*$/, ''); // Remove everything after last }
+                    .replace(/^[^{]*/, '') 
+                    .replace(/[^}]*$/, '');
                 return cleanedText;
             };
 
             const jsonContent = extractJSON(responseText);
-
-            // Validate and parse JSON
             let parsedResult;
             try {
                 parsedResult = JSON.parse(jsonContent);
@@ -50,8 +39,6 @@ class StarknetContractAuditor {
                 console.error("Raw response text:", responseText);
                 throw new Error(`JSON Parsing Failed: ${parseError.message}`);
             }
-
-            // Validate required fields
             const requiredFields = [
                 'contract_name', 
                 'security_score', 
