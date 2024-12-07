@@ -15,10 +15,12 @@ export class CairoContractGenerator {
     private chain = contractPromptTemplate.pipe(this.model);
 
     async generateContract(requirements: string): Promise<ContractGenerationResult> {
+        // console.log('requirements', requirements);
+        
         try {
             const response = await this.chain.invoke({
                 requirements
-            });
+            });            
 
             // Extract the contract code from the response
             const sourceCode = response.content;
