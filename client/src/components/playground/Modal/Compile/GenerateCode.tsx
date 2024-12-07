@@ -15,8 +15,9 @@ export default function GenerateCode({ nodes, edges, flowSummary, setDisplayStat
                         </div>
                     ))}
                 </div>
+                
 
-                <div className="mt-4 flex flex-col gap-1">
+                {/* <div className="mt-4 flex flex-col gap-1">
                     <div className=" text-lg text-black font-semibold">
                         Select Blockchain:
                     </div>
@@ -33,7 +34,7 @@ export default function GenerateCode({ nodes, edges, flowSummary, setDisplayStat
                         <option value="blockchain3">Polygon</option>
                         <option value="blockchain3">Supra MoveVM</option>
                     </select>
-                </div>
+                </div> */}
                 {!!selectedOption.length && <div className='mt-5'><Button size='lg' onClick={generateCodeHandler}>Generate</Button></div>}
             </div>
         </>
