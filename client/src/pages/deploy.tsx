@@ -12,12 +12,12 @@ interface DeploymentResponse {
 
 export default function DeploymentPage() {
   const [isLoading, setIsLoading] = useState(false);
-  const [logs, setLogs] = useState<string[]>([]);
-  const [result, setResult] = useState<DeploymentResponse | null>(null);
+    const [logs, setLogs] = useState<string[]>([]);
+    const [result, setResult] = useState<DeploymentResponse | null>(null);
 
-  const addLog = (message: string) => {
-    setLogs(prev => [...prev, `${new Date().toISOString().split('T')[1].split('.')[0]} - ${message}`]);
-  };
+    const addLog = (message: string) => {
+      setLogs(prev => [...prev, `${new Date().toISOString().split('T')[1].split('.')[0]} - ${message}`]);
+    };
 
   const handleDeploy = async () => {
     setIsLoading(true);
