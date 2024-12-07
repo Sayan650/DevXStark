@@ -6,7 +6,7 @@ export default function GenerateCode({ nodes, edges, flowSummary, setDisplayStat
     return (
         <>
             <div className='w-17'>
-                <h2 className="text-2xl mt-4 mb-4 text-black font-semibold">Confirm Flow Summary?</h2>
+                <h2 className="text-2xl mb-3 text-black font-semibold">Confirm Flow Summary?</h2>
                 <div className="bg-[#d5bdaf] rounded-lg shadow-md p-4 border-2 border-[#2A2A2A]">
                     {flowSummary.map((item, index) => (
                         <div key={index} className="mb-2 flex items-center">

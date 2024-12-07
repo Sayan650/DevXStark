@@ -7,9 +7,8 @@ import {
 } from "@/components/credeza"
 import GenerateCode from './GenerateCode';
 import ContractCode from './ContractCode';
-import CompileCode from './CompileCode';
 
-type displayComponentProps = "generate" | "contract" | "compile";
+type displayComponentProps = "generate" | "contract";
 
 export default function Compile({ nodes, edges, isOpen, onOpenChange, flowSummary }) {
     const [displayState, setDisplayState] = useState<displayComponentProps>("generate")
@@ -25,12 +24,10 @@ export default function Compile({ nodes, edges, isOpen, onOpenChange, flowSummar
             </Button>
             <Credenza open={isOpen} onOpenChange={onOpenChange}>
                 <CredenzaContent className={`border-white/10 bg-[#faf3dd] max-w-[100vh] ${displayState === "generate" && 'w-[60vh]'} `}>
-                    <CredenzaBody className='max-h-[84vh] max-w-[95vh]'>
+                    <CredenzaBody className='max-h-[84vh] max-w-[95vh] p-5'>
                         {displayState === "generate" && <GenerateCode setSourceCode={setSourceCode} nodes={nodes} edges={edges} flowSummary={flowSummary} setDisplayState={setDisplayState} />}
 
                         {displayState === "contract" && <ContractCode setDisplayState={setDisplayState} sourceCode={sourceCode} setSourceCode={setSourceCode} nodes={nodes} edges={edges} flowSummary={flowSummary} />}
-
-                        {displayState === "compile" && <CompileCode setDisplayState={setDisplayState} />}
                     </CredenzaBody>
                 </CredenzaContent>
             </Credenza>
