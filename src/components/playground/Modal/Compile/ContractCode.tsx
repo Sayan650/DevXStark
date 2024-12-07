@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Button } from '../../../ui/button'
-import sample from './sample'
-export default function ContractCode({ setDisplayState }) {
+import axios from 'axios';
+export default function ContractCode({ setLoading, sourceCode, setSourceCode, setDisplayState, }) {
     const [editable, setEditable] = useState(false);
     return (
         <>
@@ -19,7 +19,7 @@ export default function ContractCode({ setDisplayState }) {
                             wordWrap: 'break-word',
                             padding: '0',
                         }}
-                        suppressContentEditableWarning={true}>{sample}</code>
+                        suppressContentEditableWarning={true}>{sourceCode}</code>
                 </pre>
             </div>
             <div className='flex gap-10 mt-2'>
@@ -32,7 +32,11 @@ export default function ContractCode({ setDisplayState }) {
     function compileContractHandler() {
         setDisplayState("compile")
     }
-    function auditCodeHandler() {
+    async function auditCodeHandler() {
+        setLoading(true)
+        const res = await axios.post('/api/audit-contract', { sourceCode });
+        setSourceCode(res.data.sourceCode);
+        setLoading(false)
         setDisplayState("compile")
     }
 }
