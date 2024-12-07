@@ -1,3 +1,4 @@
+import { Readable } from 'stream';
 import { createAnthropicClient } from './anthropic-client';
 import { contractPromptTemplate } from './prompt-generate';
 import fs from 'fs/promises';
@@ -39,7 +40,7 @@ export class CairoContractGenerator {
     async saveContract(sourceCode: string, contractName: string): Promise<string> {
         const contractsDir = path.join(process.cwd(), 'contracts');
         await fs.mkdir(contractsDir, { recursive: true });
-        
+
         const filePath = path.join(contractsDir, `${contractName}.cairo`);
         await fs.writeFile(filePath, sourceCode);
         return filePath;

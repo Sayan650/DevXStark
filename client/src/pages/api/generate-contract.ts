@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { CairoContractGenerator } from '../../lib/contract-generator';
+import { CairoContractGenerator } from '../../lib/contract-generator1';
+import { Readable } from 'stream';
 
 type ResponseData = {
     success?: boolean;
@@ -21,8 +22,6 @@ export default async function handler(
     try {
         const { nodes, edges, flowSummary } = req.body;
 
-        console.log({ nodes, edges, flowSummary });
-
         const flowSummaryJSON = {
             nodes: nodes,
             edges: edges,
@@ -34,31 +33,34 @@ export default async function handler(
             .replace(/:/g, ': ')
             .replace(/,/g, ', ');
         // Create an instance of our contract generator
+
         const generator = new CairoContractGenerator();
-        // console.log('bodyofthecall', bodyofthecall);
 
 
-        // Generate the contract
+        const stream = new Readable({
+            read() { } // Required for a readable stream
+        });
+
+        // Pipe the stream to the response
+        res.setHeader('Content-Type', 'text/plain');
+        stream.pipe(res);
+
+        stream.push('Starting contract generation...\n');
+
         const result = await generator.generateContract(bodyofthecall);
 
         if (!result.success) {
-            return res.status(500).json({
-                error: result.error
-            });
+            stream.push(`Error: ${result.error}\n`);
+            stream.push(null); // End the stream
+            return;
         }
 
-        // Save the generated contract
-        const filePath = await generator.saveContract(
-            result.sourceCode!,
-            'lib'
-        );
+        stream.push('Contract generated successfully.\n');
+        stream.push(`Source Code:\n${result.sourceCode}\n`);
 
-        // Return success response
-        return res.status(200).json({
-            success: true,
-            sourceCode: result.sourceCode,
-            filePath
-        });
+        const filePath = await generator.saveContract(result.sourceCode!, 'lib');
+        stream.push(`Contract saved at: ${filePath}\n`);
+        stream.push(null); // End the stream
     } catch (error) {
         console.error('API error:', error);
         return res.status(500).json({
