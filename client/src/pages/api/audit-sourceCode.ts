@@ -1,17 +1,8 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import type { NextApiRequest, NextApiResponse } from 'next';
-import { CairoContractGenerator } from '../../lib/contract-generator';
+import fs from 'fs';
+import path from 'path';
 import { Anthropic } from '@anthropic-ai/sdk';
 
-
-type ResponseData = {
-    success?: boolean;
-    sourceCode?: string;
-    filePath?: string;
-    error?: string;
-};
-
-// Export a default function that handles the API route
 export default async function handler(
     req: NextApiRequest,
     res: NextApiResponse<ResponseData>
@@ -35,7 +26,8 @@ export default async function handler(
             ]
         });
         const responseText = completion.content[0].text;
-        const extractJSON = (text) => {
+
+        const extractJSON = (text: string) => {
             const codeBlockMatch = text.match(/```json\n([\s\S]*?)```/);
             if (codeBlockMatch) return codeBlockMatch[1].trim();
             const bracketMatch = text.match(/\{[\s\S]*\}/);
@@ -58,13 +50,8 @@ export default async function handler(
                 throw new Error('JSON Parsing Failed: Unknown error');
             }
         }
-        const requiredFields = [
-            'contract_name',
-            'security_score',
-            'original_contract_code',
-            'corrected_contract_code',
-            'vulnerabilities'
-        ];
+
+        const requiredFields = ['contract_name', 'corrected_contract_code'];
 
         requiredFields.forEach(field => {
             if (!parsedResult[field]) {
@@ -72,15 +59,30 @@ export default async function handler(
             }
         });
 
-        return res.status(200).json(parsedResult);
-    }
-    catch (error) {
+        // Extract corrected contract code
+        const correctedContractCode = parsedResult.corrected_contract_code;
+
+        // Define file path
+        const filePath = path.join(process.cwd(), '../contracts/src', `lib.cairo`);
+
+        // Ensure directory exists
+        fs.mkdirSync(path.dirname(filePath), { recursive: true });
+
+        // Write corrected contract code to file
+        fs.writeFileSync(filePath, correctedContractCode);
+
+        console.log(`Contract saved at: ${filePath}`);
+
+        return res.status(200).json({ success: true, filePath });
+    } catch (error) {
         console.error('API error:', error);
         return res.status(500).json({
             error: error instanceof Error ? error.message : 'An unexpected error occurred'
         });
     }
 }
+
+
 
 function getStarknetSystemPrompt() {
     return `You are a Starknet Smart Contract security expert. Your task is to audit a smart contract focusing on the following security aspects:
