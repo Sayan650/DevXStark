@@ -8,7 +8,7 @@ mod secure_contract {
     #[storage]
     struct Storage {
         owner: ContractAddress,
-        admins: LegacyMap<ContractAddress, bool>,
+        authorized_operators: LegacyMap<ContractAddress, bool>,
         value: u256,
         paused: bool,
         last_updated: u64,
@@ -18,8 +18,8 @@ mod secure_contract {
     #[derive(Drop, starknet::Event)]
     enum Event {
         ValueUpdated: ValueUpdated,
-        AdminAdded: AdminAdded,
-        AdminRemoved: AdminRemoved,
+        OperatorStatusChanged: OperatorStatusChanged,
+        OwnershipTransferred: OwnershipTransferred,
         ContractPaused: ContractPaused,
         ContractUnpaused: ContractUnpaused,
     }
@@ -33,42 +33,39 @@ mod secure_contract {
     }
 
     #[derive(Drop, starknet::Event)]
-    struct AdminAdded {
-        admin: ContractAddress,
-        added_by: ContractAddress,
+    struct OperatorStatusChanged {
+        operator: ContractAddress,
+        status: bool,
     }
 
     #[derive(Drop, starknet::Event)]
-    struct AdminRemoved {
-        admin: ContractAddress,
-        removed_by: ContractAddress,
+    struct OwnershipTransferred {
+        previous_owner: ContractAddress,
+        new_owner: ContractAddress,
     }
 
     #[derive(Drop, starknet::Event)]
     struct ContractPaused {
-        paused_by: ContractAddress,
         timestamp: u64,
     }
 
     #[derive(Drop, starknet::Event)]
     struct ContractUnpaused {
-        unpaused_by: ContractAddress,
         timestamp: u64,
     }
 
     mod Errors {
         const INVALID_CALLER: felt252 = 'Caller is not authorized';
-        const CONTRACT_PAUSED: felt252 = 'Contract is paused';
-        const CONTRACT_UNPAUSED: felt252 = 'Contract is not paused';
         const INVALID_VALUE: felt252 = 'Invalid value provided';
+        const CONTRACT_PAUSED: felt252 = 'Contract is paused';
         const ZERO_ADDRESS: felt252 = 'Zero address not allowed';
+        const ALREADY_INITIALIZED: felt252 = 'Already initialized';
     }
 
     #[constructor]
-    fn constructor(ref self: ContractState, owner: ContractAddress) {
-        assert(!owner.is_zero(), Errors::ZERO_ADDRESS);
-        self.owner.write(owner);
-        self.admins.write(owner, true);
+    fn constructor(ref self: ContractState, initial_owner: ContractAddress) {
+        assert(!initial_owner.is_zero(), Errors::ZERO_ADDRESS);
+        self.owner.write(initial_owner);
         self.paused.write(false);
         self.last_updated.write(get_block_timestamp());
     }
@@ -81,83 +78,82 @@ mod secure_contract {
 
         fn set_value(ref self: ContractState, new_value: u256) {
             self.assert_not_paused();
-            self.assert_admin();
+            self.assert_authorized();
             assert(new_value != 0, Errors::INVALID_VALUE);
 
             let old_value = self.value.read();
             self.value.write(new_value);
             self.last_updated.write(get_block_timestamp());
 
-            self.emit(Event::ValueUpdated(ValueUpdated {
-                old_value,
-                new_value,
-                updated_by: get_caller_address(),
-                timestamp: get_block_timestamp(),
-            }));
+            self.emit(Event::ValueUpdated(
+                ValueUpdated {
+                    old_value,
+                    new_value,
+                    updated_by: get_caller_address(),
+                    timestamp: get_block_timestamp()
+                }
+            ));
         }
 
-        fn add_admin(ref self: ContractState, new_admin: ContractAddress) {
-            self.assert_owner();
-            assert(!new_admin.is_zero(), Errors::ZERO_ADDRESS);
+        fn add_operator(ref self: ContractState, operator: ContractAddress) {
+            self.assert_only_owner();
+            assert(!operator.is_zero(), Errors::ZERO_ADDRESS);
             
-            self.admins.write(new_admin, true);
+            self.authorized_operators.write(operator, true);
             
-            self.emit(Event::AdminAdded(AdminAdded {
-                admin: new_admin,
-                added_by: get_caller_address(),
-            }));
+            self.emit(Event::OperatorStatusChanged(
+                OperatorStatusChanged { operator, status: true }
+            ));
         }
 
-        fn remove_admin(ref self: ContractState, admin: ContractAddress) {
-            self.assert_owner();
-            assert(!admin.is_zero(), Errors::ZERO_ADDRESS);
-            assert(admin != self.owner.read(), Errors::INVALID_CALLER);
+        fn remove_operator(ref self: ContractState, operator: ContractAddress) {
+            self.assert_only_owner();
+            assert(!operator.is_zero(), Errors::ZERO_ADDRESS);
             
-            self.admins.write(admin, false);
+            self.authorized_operators.write(operator, false);
             
-            self.emit(Event::AdminRemoved(AdminRemoved {
-                admin,
-                removed_by: get_caller_address(),
-            }));
+            self.emit(Event::OperatorStatusChanged(
+                OperatorStatusChanged { operator, status: false }
+            ));
+        }
+
+        fn transfer_ownership(ref self: ContractState, new_owner: ContractAddress) {
+            self.assert_only_owner();
+            assert(!new_owner.is_zero(), Errors::ZERO_ADDRESS);
+            
+            let previous_owner = self.owner.read();
+            self.owner.write(new_owner);
+            
+            self.emit(Event::OwnershipTransferred(
+                OwnershipTransferred { previous_owner, new_owner }
+            ));
         }
 
         fn pause(ref self: ContractState) {
-            self.assert_admin();
-            assert(!self.paused.read(), Errors::CONTRACT_PAUSED);
-            
+            self.assert_only_owner();
             self.paused.write(true);
-            
-            self.emit(Event::ContractPaused(ContractPaused {
-                paused_by: get_caller_address(),
-                timestamp: get_block_timestamp(),
-            }));
+            self.emit(Event::ContractPaused(ContractPaused { timestamp: get_block_timestamp() }));
         }
 
         fn unpause(ref self: ContractState) {
-            self.assert_admin();
-            assert(self.paused.read(), Errors::CONTRACT_UNPAUSED);
-            
+            self.assert_only_owner();
             self.paused.write(false);
-            
-            self.emit(Event::ContractUnpaused(ContractUnpaused {
-                unpaused_by: get_caller_address(),
-                timestamp: get_block_timestamp(),
-            }));
-        }
-
-        fn is_admin(self: @ContractState, address: ContractAddress) -> bool {
-            self.admins.read(address)
+            self.emit(Event::ContractUnpaused(ContractUnpaused { timestamp: get_block_timestamp() }));
         }
     }
 
     #[generate_trait]
     impl InternalFunctions of InternalFunctionsTrait {
-        fn assert_owner(self: @ContractState) {
+        fn assert_only_owner(self: @ContractState) {
             assert(get_caller_address() == self.owner.read(), Errors::INVALID_CALLER);
         }
 
-        fn assert_admin(self: @ContractState) {
-            assert(self.admins.read(get_caller_address()), Errors::INVALID_CALLER);
+        fn assert_authorized(self: @ContractState) {
+            let caller = get_caller_address();
+            assert(
+                caller == self.owner.read() || self.authorized_operators.read(caller),
+                Errors::INVALID_CALLER
+            );
         }
 
         fn assert_not_paused(self: @ContractState) {
@@ -170,10 +166,10 @@ mod secure_contract {
 trait ISecureContract<TContractState> {
     fn get_value(self: @TContractState) -> u256;
     fn set_value(ref self: TContractState, new_value: u256);
-    fn add_admin(ref self: TContractState, new_admin: ContractAddress);
-    fn remove_admin(ref self: TContractState, admin: ContractAddress);
+    fn add_operator(ref self: TContractState, operator: ContractAddress);
+    fn remove_operator(ref self: TContractState, operator: ContractAddress);
+    fn transfer_ownership(ref self: TContractState, new_owner: ContractAddress);
     fn pause(ref self: TContractState);
     fn unpause(ref self: TContractState);
-    fn is_admin(self: @TContractState, address: ContractAddress) -> bool;
 }
 ```
