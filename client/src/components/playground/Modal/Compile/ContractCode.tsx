@@ -34,7 +34,7 @@ export default function ContractCode({ setLoading, sourceCode, setSourceCode, se
     }
     async function auditCodeHandler() {
         setLoading(true)
-        const res = await axios.post('/api/audit-contract', { sourceCode });
+        const res = await axios.post('/api/audit-sourceCode', { sourceCode });
         setSourceCode(res.data.sourceCode);
         setLoading(false)
         setDisplayState("compile")
