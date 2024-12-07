@@ -36,7 +36,8 @@ export default async function handler(
         // Create an instance of our contract generator
         const generator = new CairoContractGenerator();
         // console.log('bodyofthecall', bodyofthecall);
-
+        console.log("flowSummaryJSON",flowSummaryJSON);
+        
 
         // Generate the contract
         const result = await generator.generateContract(bodyofthecall);

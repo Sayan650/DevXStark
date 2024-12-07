@@ -30,7 +30,7 @@ export default function DeploymentPage() {
       const response = await fetch('/api/deploy-contract', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contractName: 'personastark_personastark' })
+        body: JSON.stringify({ contractName: 'contract_contract' })
       });
 
       const data: DeploymentResponse = await response.json();
