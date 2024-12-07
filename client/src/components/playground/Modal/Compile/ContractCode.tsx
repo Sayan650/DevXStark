@@ -42,7 +42,7 @@ export default function ContractCode({ nodes, edges, flowSummary, sourceCode, se
     }
     async function auditCodeHandler() {
         const fetchStreamedData = async () => {
-            const response = await fetch("/api/audit-sourceCode",
+            const response = await fetch("/api/generate-contract",
                 {
                     method: "POST",
                     headers: {
@@ -51,7 +51,7 @@ export default function ContractCode({ nodes, edges, flowSummary, sourceCode, se
                     body: JSON.stringify({ sourceCode }),
                 }
             ); // Fetch data from the server
-            setSourceCode("");
+            setSourceCode('');
             const reader = response.body?.getReader();
             const decoder = new TextDecoder();
 
@@ -69,6 +69,7 @@ export default function ContractCode({ nodes, edges, flowSummary, sourceCode, se
                 }
             }
         };
+
         fetchStreamedData();
     }
 }

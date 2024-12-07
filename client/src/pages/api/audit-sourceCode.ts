@@ -44,7 +44,7 @@ export default async function handler(
         for await (const messageStream of stream) {
             if (messageStream.type === 'content_block_delta') {
                 const deltaText = messageStream.delta.text;
-                // console.log(deltaText);
+                console.log(deltaText);
                 fullResponse += deltaText;
 
                 // Send text chunks as SSE (Server-Sent Events)
