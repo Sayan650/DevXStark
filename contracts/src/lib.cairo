@@ -1,23 +1,45 @@
 #[starknet::contract]
-mod contract {
-    use starknet::{ContractAddress, get_caller_address};
+mod secure_contract {
+    use starknet::{ContractAddress, get_caller_address, get_block_timestamp};
     use zeroable::Zeroable;
     use traits::Into;
-
+    
     #[storage]
     struct Storage {
         owner: ContractAddress,
-        admins: LegacyMap::<ContractAddress, bool>,
-        is_paused: bool,
+        admin: ContractAddress,
+        paused: bool,
+        value: u256,
+        whitelist: LegacyMap<ContractAddress, bool>,
     }
 
     #[event]
     #[derive(Drop, starknet::Event)]
     enum Event {
+        ValueUpdated: ValueUpdated,
+        WhitelistUpdated: WhitelistUpdated,
+        PauseStateChanged: PauseStateChanged,
         OwnershipTransferred: OwnershipTransferred,
-        AdminStatusChanged: AdminStatusChanged,
-        ContractPaused: ContractPaused,
-        ContractUnpaused: ContractUnpaused,
+    }
+
+    #[derive(Drop, starknet::Event)]
+    struct ValueUpdated {
+        old_value: u256,
+        new_value: u256,
+        updated_by: ContractAddress,
+        timestamp: u64,
+    }
+
+    #[derive(Drop, starknet::Event)]
+    struct WhitelistUpdated {
+        account: ContractAddress,
+        status: bool,
+    }
+
+    #[derive(Drop, starknet::Event)]
+    struct PauseStateChanged {
+        state: bool,
+        timestamp: u64,
     }
 
     #[derive(Drop, starknet::Event)]
@@ -26,131 +48,104 @@ mod contract {
         new_owner: ContractAddress,
     }
 
-    #[derive(Drop, starknet::Event)]
-    struct AdminStatusChanged {
-        admin: ContractAddress,
-        status: bool,
-    }
-
-    #[derive(Drop, starknet::Event)]
-    struct ContractPaused {
-        by: ContractAddress
-    }
-
-    #[derive(Drop, starknet::Event)]
-    struct ContractUnpaused {
-        by: ContractAddress
-    }
-
     mod Errors {
-        const INVALID_ADDRESS: felt252 = 'Invalid address';
-        const UNAUTHORIZED: felt252 = 'Unauthorized';
-        const ALREADY_INITIALIZED: felt252 = 'Already initialized';
+        const INVALID_CALLER: felt252 = 'Caller is not authorized';
         const CONTRACT_PAUSED: felt252 = 'Contract is paused';
-        const CONTRACT_NOT_PAUSED: felt252 = 'Contract not paused';
+        const INVALID_VALUE: felt252 = 'Invalid value provided';
+        const ZERO_ADDRESS: felt252 = 'Zero address not allowed';
+        const NOT_WHITELISTED: felt252 = 'Address not whitelisted';
     }
 
     #[constructor]
-    fn constructor(ref self: ContractState, owner: ContractAddress) {
-        assert(!owner.is_zero(), Errors::INVALID_ADDRESS);
+    fn constructor(ref self: ContractState, owner: ContractAddress, admin: ContractAddress) {
+        assert(!owner.is_zero(), Errors::ZERO_ADDRESS);
+        assert(!admin.is_zero(), Errors::ZERO_ADDRESS);
         self.owner.write(owner);
-        self.admins.write(owner, true);
-        self.is_paused.write(false);
+        self.admin.write(admin);
+        self.paused::write(false); // Initialize paused state
     }
 
-    #[external(v0)]
+    #[external]
+    fn update_value(ref self: ContractState, new_value: u256) {
+        assert(!self.paused.read(), Errors::CONTRACT_PAUSED);
+        assert(self.is_whitelisted(get_caller_address()), Errors::NOT_WHITELISTED);
+
+        let old_value = self.value.read();
+        self.value.write(new_value);
+
+        self.emit(Event::ValueUpdated(ValueUpdated { 
+            old_value: old_value,
+            new_value: new_value, 
+            updated_by: get_caller_address(),
+            timestamp: get_block_timestamp()
+        }));
+    }
+    
+    #[external]
+    fn whitelist_account(ref self: ContractState, account: ContractAddress, status: bool) {
+        assert(self.is_authorized_caller(), Errors::INVALID_CALLER);
+        
+        self.whitelist.write(account, status);
+        
+        self.emit(Event::WhitelistUpdated(WhitelistUpdated { 
+            account: account,
+            status: status
+        }));
+    }
+    
+    #[external]
+    fn pause(ref self: ContractState) {
+        assert(self.is_authorized_caller(), Errors::INVALID_CALLER);
+        assert(!self.paused.read(), Errors::CONTRACT_PAUSED);
+        
+        self.paused.write(true);
+        
+        self.emit(Event::PauseStateChanged(PauseStateChanged { 
+            state: true,
+            timestamp: get_block_timestamp()
+        }));
+    }
+
+    #[external]
+    fn unpause(ref self: ContractState) {
+        assert(self.is_authorized_caller(), Errors::INVALID_CALLER);
+        assert(self.paused.read(), Errors::CONTRACT_PAUSED); // Check if already paused
+        
+        self.paused.write(false);
+        
+        self.emit(Event::PauseStateChanged(PauseStateChanged { 
+            state: false,
+            timestamp: get_block_timestamp()
+        }));
+    }
+
+    #[external]
     fn transfer_ownership(ref self: ContractState, new_owner: ContractAddress) {
-        self.only_owner();
-        assert(!new_owner.is_zero(), Errors::INVALID_ADDRESS);
+        assert(self.is_owner(), Errors::INVALID_CALLER);
+        assert(!new_owner.is_zero(), Errors::ZERO_ADDRESS);
         
         let previous_owner = self.owner.read();
         self.owner.write(new_owner);
-        self.admins.write(previous_owner, false); // Remove previous owner from admins
-        self.admins.write(new_owner, true); // Add new owner as admin
         
-        self.emit(Event::OwnershipTransferred(OwnershipTransferred {
+        self.emit(Event::OwnershipTransferred(OwnershipTransferred { 
             previous_owner: previous_owner,
-            new_owner: new_owner,
+            new_owner: new_owner
         }));
     }
 
-    #[external(v0)]
-    fn set_admin(ref self: ContractState, admin: ContractAddress, status: bool) {
-        self.only_owner();
-        assert(!admin.is_zero(), Errors::INVALID_ADDRESS);
-        assert(admin != self.owner.read(), Errors::UNAUTHORIZED); // Owner cannot be set as admin
-        
-        self.admins.write(admin, status);
-        
-        self.emit(Event::AdminStatusChanged(AdminStatusChanged {
-            admin: admin,
-            status: status,
-        }));
+    fn is_owner(self: @ContractState) -> bool {
+        self.owner.read() == get_caller_address()
     }
 
-    #[external(v0)]
-    fn pause(ref self: ContractState) {
-        self.assert_not_paused();
-        self.only_admin();
-        
-        self.is_paused.write(true);
-        
-        self.emit(Event::ContractPaused(ContractPaused {
-            by: get_caller_address()
-        }));
+    fn is_admin(self: @ContractState) -> bool {
+        self.admin.read() == get_caller_address()
+    }
+    
+    fn is_authorized_caller(self: @ContractState) -> bool {
+        self.is_owner() || self.is_admin()
     }
 
-    #[external(v0)]
-    fn unpause(ref self: ContractState) {
-        self.assert_paused();
-        self.only_admin();
-        
-        self.is_paused.write(false);
-        
-        self.emit(Event::ContractUnpaused(ContractUnpaused {
-            by: get_caller_address()
-        }));
-    }
-
-    #[view]
-    fn get_owner(self: @ContractState) -> ContractAddress {
-        self.owner.read()
-    }
-
-    #[view]
-    fn is_admin(self: @ContractState, address: ContractAddress) -> bool {
-        self.admins.read(address)
-    }
-
-    #[view]
-    fn is_contract_paused(self: @ContractState) -> bool {
-        self.is_paused.read()
-    }
-
-    trait InternalFunctions {
-        fn only_owner(ref self: ContractState);
-        fn only_admin(ref self: ContractState);
-        fn assert_paused(ref self: ContractState);
-        fn assert_not_paused(ref self: ContractState);
-    }
-
-    impl InternalFunctionsImpl of InternalFunctions {
-        fn only_owner(ref self: ContractState) {
-            let caller = get_caller_address();
-            assert(caller == self.owner.read(), Errors::UNAUTHORIZED);
-        }
-
-        fn only_admin(ref self: ContractState) {
-            let caller = get_caller_address();
-            assert(self.admins.read(caller), Errors::UNAUTHORIZED);
-        }
-
-        fn assert_paused(ref self: ContractState) {
-            assert(self.is_paused.read(), Errors::CONTRACT_NOT_PAUSED);
-        }
-
-        fn assert_not_paused(ref self: ContractState) {
-            assert(!self.is_paused.read(), Errors::CONTRACT_PAUSED);
-        }
+    fn is_whitelisted(self: @ContractState, account: ContractAddress) -> bool {
+        self.whitelist.read(account)
     }
 }

@@ -1,10 +1,8 @@
 import React, { useState } from 'react'
 import { Button } from '../../../ui/button';
-import axios from 'axios';
 
-export default function GenerateCode({ nodes, edges, flowSummary, setDisplayState, setLoading, setSourceCode }) {
+export default function GenerateCode({ nodes, edges, flowSummary, setDisplayState, setSourceCode }) {
     const [selectedOption, setSelectedOption] = useState("");
-
     return (
         <>
             <div className='w-17'>
@@ -41,15 +39,35 @@ export default function GenerateCode({ nodes, edges, flowSummary, setDisplayStat
         </>
     )
     async function generateCodeHandler() {
-        try {
-            setLoading(true)
-            const res = await axios.post('/api/generate-contract', { nodes, edges, flowSummary })
-            setSourceCode(res.data.sourceCode)
-            setLoading(false)
-            setDisplayState("contract")
-        } catch (error) {
-            console.log(error.message);
-        }
+        setDisplayState("contract")
+        const fetchStreamedData = async () => {
+            const response = await fetch("/api/generate-contract",
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ nodes, edges, flowSummary }),
+                }
+            ); // Fetch data from the server
+            const reader = response.body?.getReader();
+            const decoder = new TextDecoder();
 
+            if (reader) {
+                let done = false;
+
+                while (!done) {
+                    const { value, done: isDone } = await reader.read(); // Read chunks
+                    done = isDone;
+
+                    if (value) {
+                        // Decode the chunk and append it to the state
+                        setSourceCode((prev) => prev + decoder.decode(value));
+                    }
+                }
+            }
+        };
+
+        fetchStreamedData();
     }
 }

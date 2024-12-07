@@ -1,8 +1,12 @@
-import { Readable } from 'stream';
+import path from 'path';
 import { createAnthropicClient } from './anthropic-client';
 import { contractPromptTemplate } from './prompt-generate';
+import { StringOutputParser } from "@langchain/core/output_parsers";
 import fs from 'fs/promises';
-import path from 'path';
+import { NextApiResponse } from 'next';
+
+
+const parser = new StringOutputParser();
 
 interface ContractGenerationResult {
     [x: string]: unknown;
@@ -13,18 +17,19 @@ interface ContractGenerationResult {
 
 export class CairoContractGenerator {
     private model = createAnthropicClient();
-    private chain = contractPromptTemplate.pipe(this.model);
+    private chain = contractPromptTemplate.pipe(this.model).pipe(parser);
 
-    async generateContract(requirements: string): Promise<ContractGenerationResult> {
-        // console.log('requirements', requirements);
-        
+    async generateContract(requirements: string, res: NextApiResponse): Promise<ContractGenerationResult> {
         try {
-            const response = await this.chain.invoke({
-                requirements
-            });            
-
-            // Extract the contract code from the response
-            const sourceCode = response.content;
+            const stream = await this.chain.stream(requirements);
+            const chunks = [];
+            let sourceCode = '';
+            for await (const chunk of stream) {
+                chunks.push(chunk);
+                sourceCode += chunk + ' ';
+                res.write(chunk);
+                // console.log(`${chunk}|`);
+            };
 
             return {
                 success: true,

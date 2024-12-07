@@ -1,13 +1,13 @@
 import React, { useState } from 'react'
 import { Button } from '../../../ui/button'
-import axios from 'axios';
-export default function ContractCode({ setLoading, sourceCode, setSourceCode, setDisplayState, }) {
+export default function ContractCode({ nodes, edges, flowSummary, sourceCode, setSourceCode, setDisplayState, }) {
     const [editable, setEditable] = useState(false);
+
     return (
         <>
             <div className='text-black text-2xl font-bold'>Contract Code</div>
             <div
-                className={`text-black h-[90%] overflow-y-auto mt-1 custom-scrollbar pl-2 border-4 border-black rounded-e-xl ${editable ? 'bg-yellow-200' : 'bg-yellow-100'}`}>
+                className={`text-black mt-1 custom-scrollbar pl-2 border-4 border-black rounded-xl ${editable ? 'bg-yellow-200' : 'bg-yellow-100'}`}>
                 <pre>
                     <code
                         contentEditable={editable}
@@ -23,7 +23,7 @@ export default function ContractCode({ setLoading, sourceCode, setSourceCode, se
                 </pre>
             </div>
             <div className='flex gap-10 mt-2'>
-                {!editable && <Button className='' onClick={compileContractHandler}>Compile</Button>}
+                {!editable && <Button className='' onClick={compileContractHandler}>Deploy</Button>}
                 {!editable && <Button className='' onClick={() => setEditable(true)}>Edit</Button>}
                 {editable && <Button className='' onClick={() => setEditable(false)}>Save</Button>}
                 {!editable && <Button className='' onClick={auditCodeHandler}>Audit</Button>}
@@ -33,10 +33,34 @@ export default function ContractCode({ setLoading, sourceCode, setSourceCode, se
         setDisplayState("compile")
     }
     async function auditCodeHandler() {
-        setLoading(true)
-        const res = await axios.post('/api/audit-sourceCode', { sourceCode });
-        setSourceCode(res.data.sourceCode);
-        setLoading(false)
-        setDisplayState("compile")
+        const fetchStreamedData = async () => {
+            const response = await fetch("/api/audit-sourceCode",
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ sourceCode }),
+                }
+            ); // Fetch data from the server
+            setSourceCode("");
+            const reader = response.body?.getReader();
+            const decoder = new TextDecoder();
+
+            if (reader) {
+                let done = false;
+
+                while (!done) {
+                    const { value, done: isDone } = await reader.read(); // Read chunks
+                    done = isDone;
+
+                    if (value) {
+                        // Decode the chunk and append it to the state
+                        setSourceCode((prev) => prev + decoder.decode(value));
+                    }
+                }
+            }
+        };
+        fetchStreamedData();
     }
 }

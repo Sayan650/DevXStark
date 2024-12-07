@@ -1,17 +1,10 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { CairoContractGenerator } from '../../lib/contract-generator';
-
-type ResponseData = {
-    success?: boolean;
-    sourceCode?: string;
-    filePath?: string;
-    error?: string;
-};
+import { CairoContractGenerator } from '../../lib/contract-generator1';
 
 // Export a default function that handles the API route
 export default async function handler(
     req: NextApiRequest,
-    res: NextApiResponse<ResponseData>
+    res: NextApiResponse
 ) {
     // Only allow POST requests
     if (req.method !== 'POST') {
@@ -20,8 +13,6 @@ export default async function handler(
 
     try {
         const { nodes, edges, flowSummary } = req.body;
-
-        console.log({ nodes, edges, flowSummary });
 
         const flowSummaryJSON = {
             nodes: nodes,
@@ -33,33 +24,12 @@ export default async function handler(
             .replace(/[{}"]/g, '')
             .replace(/:/g, ': ')
             .replace(/,/g, ', ');
-        // Create an instance of our contract generator
+
         const generator = new CairoContractGenerator();
-        // console.log('bodyofthecall', bodyofthecall);
-        console.log("flowSummaryJSON",flowSummaryJSON);
-        
+        const result = await generator.generateContract(bodyofthecall, res);
 
-        // Generate the contract
-        const result = await generator.generateContract(bodyofthecall);
 
-        if (!result.success) {
-            return res.status(500).json({
-                error: result.error
-            });
-        }
-
-        // Save the generated contract
-        const filePath = await generator.saveContract(
-            result.sourceCode!,
-            'lib'
-        );
-
-        // Return success response
-        return res.status(200).json({
-            success: true,
-            sourceCode: result.sourceCode,
-            filePath
-        });
+        await generator.saveContract(result.sourceCode!, 'lib');
     } catch (error) {
         console.error('API error:', error);
         return res.status(500).json({
