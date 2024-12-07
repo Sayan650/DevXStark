@@ -1,8 +1,9 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Button } from '../../../ui/button'
 import axios from 'axios';
-export default function ContractCode({ setLoading, sourceCode, setSourceCode, setDisplayState, }) {
+export default function ContractCode({ nodes, edges, flowSummary, sourceCode, setSourceCode, setDisplayState, }) {
     const [editable, setEditable] = useState(false);
+
     return (
         <>
             <div className='text-black text-2xl font-bold'>Contract Code</div>
@@ -33,10 +34,34 @@ export default function ContractCode({ setLoading, sourceCode, setSourceCode, se
         setDisplayState("compile")
     }
     async function auditCodeHandler() {
-        setLoading(true)
-        const res = await axios.post('/api/audit-contract', { sourceCode });
-        setSourceCode(res.data.sourceCode);
-        setLoading(false)
-        setDisplayState("compile")
+        const fetchStreamedData = async () => {
+            const response = await fetch("/api/audit-sourceCode",
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ sourceCode }),
+                }
+            ); // Fetch data from the server
+            setSourceCode("");
+            const reader = response.body?.getReader();
+            const decoder = new TextDecoder();
+
+            if (reader) {
+                let done = false;
+
+                while (!done) {
+                    const { value, done: isDone } = await reader.read(); // Read chunks
+                    done = isDone;
+
+                    if (value) {
+                        // Decode the chunk and append it to the state
+                        setSourceCode((prev) => prev + decoder.decode(value));
+                    }
+                }
+            }
+        };
+        fetchStreamedData();
     }
 }

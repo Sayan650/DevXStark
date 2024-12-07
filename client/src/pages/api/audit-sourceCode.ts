@@ -1,17 +1,14 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { CairoContractGenerator } from '../../lib/contract-generator';
+import fs from 'fs';
+import path from 'path';
 import { Anthropic } from '@anthropic-ai/sdk';
-
 
 type ResponseData = {
     success?: boolean;
-    sourceCode?: string;
     filePath?: string;
     error?: string;
 };
 
-// Export a default function that handles the API route
 export default async function handler(
     req: NextApiRequest,
     res: NextApiResponse<ResponseData>
@@ -20,10 +17,17 @@ export default async function handler(
         return res.status(405).json({ error: 'Method not allowed' });
     }
 
+    // Set headers for streaming
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-open');
+
     try {
         const { sourceCode } = req.body;
         const claude = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-        const completion = await claude.messages.create({
+
+        // Stream the response
+        const stream = await claude.messages.create({
             model: "claude-3-opus-20240229",
             system: getStarknetSystemPrompt(),
             max_tokens: 4096,
@@ -32,39 +36,33 @@ export default async function handler(
                     role: "user",
                     content: `Carefully audit the following Starknet smart contract and provide a STRICTLY FORMATTED JSON response:\n\n${sourceCode}`
                 }
-            ]
+            ],
+            stream: true
         });
-        const responseText = completion.content[0].text;
-        const extractJSON = (text) => {
-            const codeBlockMatch = text.match(/```json\n([\s\S]*?)```/);
-            if (codeBlockMatch) return codeBlockMatch[1].trim();
-            const bracketMatch = text.match(/\{[\s\S]*\}/);
-            if (bracketMatch) return bracketMatch[0].trim();
-            const cleanedText = text
-                .replace(/^[^{]*/, '')
-                .replace(/[^}]*$/, '');
-            return cleanedText;
-        };
 
-        const jsonContent = extractJSON(responseText);
+        let fullResponse = '';
+        for await (const messageStream of stream) {
+            if (messageStream.type === 'content_block_delta') {
+                const deltaText = messageStream.delta.text;
+                // console.log(deltaText);
+                fullResponse += deltaText;
+
+                // Send text chunks as SSE (Server-Sent Events)
+                res.write(`data: ${JSON.stringify({ chunk: deltaText })}\n\n`);
+            }
+        }
+
+        // Extract JSON from full response
+        const jsonContent = extractJSON(fullResponse);
         let parsedResult;
         try {
             parsedResult = JSON.parse(jsonContent);
         } catch (parseError) {
-            console.error("Raw response text:", responseText);
-            if (parseError instanceof Error) {
-                throw new Error(`JSON Parsing Failed: ${parseError.message}`);
-            } else {
-                throw new Error('JSON Parsing Failed: Unknown error');
-            }
+            console.error("Raw response text:", fullResponse);
+            throw new Error(`JSON Parsing Failed: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`);
         }
-        const requiredFields = [
-            'contract_name',
-            'security_score',
-            'original_contract_code',
-            'corrected_contract_code',
-            'vulnerabilities'
-        ];
+
+        const requiredFields = ['contract_name', 'corrected_contract_code'];
 
         requiredFields.forEach(field => {
             if (!parsedResult[field]) {
@@ -72,14 +70,51 @@ export default async function handler(
             }
         });
 
-        return res.status(200).json(parsedResult);
-    }
-    catch (error) {
+        // Extract corrected contract code
+        const correctedContractCode = parsedResult.corrected_contract_code;
+
+        // Define file path
+        const filePath = path.join(process.cwd(), '../contracts/src', `lib.cairo`);
+
+        // Ensure directory exists
+        fs.mkdirSync(path.dirname(filePath), { recursive: true });
+
+        // Write corrected contract code to file
+        fs.writeFileSync(filePath, correctedContractCode);
+
+        console.log(`Contract saved at: ${filePath}`);
+
+        // Send final success message
+        res.write(`data: ${JSON.stringify({
+            type: 'complete',
+            filePath,
+            success: true
+        })}\n\n`);
+
+        // Close the stream
+        res.end();
+    } catch (error) {
         console.error('API error:', error);
-        return res.status(500).json({
+
+        // Send error as SSE
+        res.write(`data: ${JSON.stringify({
+            type: 'error',
             error: error instanceof Error ? error.message : 'An unexpected error occurred'
-        });
+        })}\n\n`);
+
+        res.end();
     }
+}
+
+function extractJSON(text: string) {
+    const codeBlockMatch = text.match(/```json\n([\s\S]*?)```/);
+    if (codeBlockMatch) return codeBlockMatch[1].trim();
+    const bracketMatch = text.match(/\{[\s\S]*\}/);
+    if (bracketMatch) return bracketMatch[0].trim();
+    const cleanedText = text
+        .replace(/^[^{]*/, '')
+        .replace(/[^}]*$/, '');
+    return cleanedText;
 }
 
 function getStarknetSystemPrompt() {
@@ -142,5 +177,4 @@ IMPORTANT:
 - Provide the FULL corrected contract code, not just code snippets
 - Include concrete, implementable code fixes for each vulnerability
 - Explain all changes made in the corrected code`;
-};
-
+}

@@ -1,10 +1,8 @@
 import React, { useState } from 'react'
 import { Button } from '../../../ui/button';
-import axios from 'axios';
 
-export default function GenerateCode({ nodes, edges, flowSummary, setDisplayState, setLoading, setSourceCode }) {
+export default function GenerateCode({ nodes, edges, flowSummary, setDisplayState, setSourceCode }) {
     const [selectedOption, setSelectedOption] = useState("");
-    const [responseContent, setResponseContent] = useState('');
     return (
         <>
             <div className='w-17'>
@@ -41,37 +39,35 @@ export default function GenerateCode({ nodes, edges, flowSummary, setDisplayStat
         </>
     )
     async function generateCodeHandler() {
-        try {
+        setDisplayState("contract")
+        const fetchStreamedData = async () => {
+            const response = await fetch("/api/generate-contract",
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ nodes, edges, flowSummary }),
+                }
+            ); // Fetch data from the server
+            const reader = response.body?.getReader();
+            const decoder = new TextDecoder();
 
-            // setDisplayState("contract")
-            const response = await fetch('/api/generate-contract', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ nodes, edges, flowSummary }),
-            });
+            if (reader) {
+                let done = false;
 
-            if (!response.body) {
-                console.error('ReadableStream not supported in this browser.');
-                return;
+                while (!done) {
+                    const { value, done: isDone } = await reader.read(); // Read chunks
+                    done = isDone;
+
+                    if (value) {
+                        // Decode the chunk and append it to the state
+                        setSourceCode((prev) => prev + decoder.decode(value));
+                    }
+                }
             }
+        };
 
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder('utf-8');
-            let result = '';
-
-            while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
-                const chunk = decoder.decode(value, { stream: true });
-                result += chunk;
-                console.log(chunk); // Log each chunk of data
-                setResponseContent((prev) => prev + chunk);
-            }
-        } catch (error) {
-            console.log(error.message);
-        }
-
+        fetchStreamedData();
     }
 }
