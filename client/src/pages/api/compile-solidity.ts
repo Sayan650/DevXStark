@@ -3,6 +3,10 @@ import { ContractFactory, ethers } from 'ethers';
 import { promises as fs } from 'fs';
 import path from 'path';
 import solc from 'solc';
+import { createPublicClient, http, createWalletClient } from "viem";
+import { baseSepolia } from "viem/chains";
+import { privateKeyToAccount } from 'viem/accounts'
+import { type Abi } from 'viem';
 
 interface CompilationResult {
   success: boolean;
@@ -68,7 +72,7 @@ async function compileSolidity(source: string, contractName: string): Promise<Co
     return {
       success: true,
       bytecode,
-      abi
+      abi,
     };
 
   } catch (error) {
@@ -80,7 +84,20 @@ async function compileSolidity(source: string, contractName: string): Promise<Co
     };
   }
 }
-
+async function deployContract(abi: Abi, bytecode: string):Promise<string> {
+  const client = createWalletClient({
+    chain: baseSepolia,
+    transport: http("https://base-sepolia.g.alchemy.com/v2/zYiCO7uc1H-R9dzcwJN7ryMTs01QlGid"),
+  });
+  
+  const account = privateKeyToAccount('0x2ab4cfa4376ce9a4a8bd91e5d7ce58d9afa9a551aa80167474b2a4c42233f643')
+  const hash = await client.deployContract({
+    abi,
+    account,
+    bytecode: `0x${bytecode}`,
+  })
+  return hash;
+}
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<CompilationResult>
@@ -124,12 +141,15 @@ export default async function handler(
     // Compile contract
     console.log('Compiling contract...');
     const compilation = await compileSolidity(source, contractName);
-    
-    if (!compilation.success) {
+    if (!compilation.success || !compilation.bytecode) {
       return res.status(500).json(compilation);
     }
 
+    const deployment = await deployContract(compilation.abi, compilation.bytecode);
+   
     console.log('Compilation successful!');
+    console.log('Deployment successful!');
+    console.log('Deployment hash:', deployment);
     return res.status(200).json(compilation);
 
   } catch (error) {
