@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { CairoContractGenerator } from '../../lib/contract-generator';
 import { Anthropic } from '@anthropic-ai/sdk';
@@ -51,7 +52,11 @@ export default async function handler(
             parsedResult = JSON.parse(jsonContent);
         } catch (parseError) {
             console.error("Raw response text:", responseText);
-            throw new Error(`JSON Parsing Failed: ${parseError.message}`);
+            if (parseError instanceof Error) {
+                throw new Error(`JSON Parsing Failed: ${parseError.message}`);
+            } else {
+                throw new Error('JSON Parsing Failed: Unknown error');
+            }
         }
         const requiredFields = [
             'contract_name',
