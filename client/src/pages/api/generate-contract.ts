@@ -25,11 +25,13 @@ export default async function handler(
             .replace(/:/g, ': ')
             .replace(/,/g, ', ');
 
+            console.log(flowSummaryJSON);
+            
         const generator = new CairoContractGenerator();
         const result = await generator.generateContract(bodyofthecall, res);
 
 
-        // await generator.saveContract(result.sourceCode!, 'lib');
+        await generator.saveContract(result.sourceCode!, 'lib');
     } catch (error) {
         console.error('API error:', error);
         return res.status(500).json({

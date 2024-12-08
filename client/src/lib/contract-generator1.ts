@@ -25,14 +25,16 @@ export class CairoContractGenerator {
     try {
       const stream = await this.chain.stream(requirements);
       const chunks = [];
-      let sourceCode = "";
+      // let sourceCode = "";
       for await (const chunk of stream) {
         chunks.push(chunk);
-        sourceCode += chunk + " ";
+        // sourceCode += chunk + " ";
         res.write(chunk);
         // console.log(`${chunk}|`);
       }
-
+      const sourceCode=chunks.join('');
+      // console.log("sourceCode", sourceCode);
+      
       return {
         success: true,
         sourceCode: sourceCode as string,
@@ -47,17 +49,19 @@ export class CairoContractGenerator {
     }
   }
 
-//   async saveContract(sourceCode: string, contractName: string): Promise<string> {
-//     const contractsDir = '/home/odinson/Desktop/PersonaStark/contracts/src';
+  async saveContract(sourceCode: string, contractName: string): Promise<string> {
+    const contractsDir = '/home/odinson/Desktop/PersonaStark/contracts/src';
     
-//     try {
-//         await fs.mkdir(contractsDir, { recursive: true });
-//         const filePath = path.join(contractsDir, `${contractName}.cairo`);
-//         await fs.writeFile(filePath, sourceCode);
-//         return filePath;
-//     } catch (error) {
-//         console.error('Error saving contract:', error);
-//         throw error;
-//     }
-// }
+    try {
+      // console.log(sourceCode);
+      
+        await fs.mkdir(contractsDir, { recursive: true });
+        const filePath = path.join(contractsDir, `${contractName}.cairo`);
+        await fs.writeFile(filePath, sourceCode);
+        return filePath;
+    } catch (error) {
+        console.error('Error saving contract:', error);
+        throw error;
+    }
+}
 }

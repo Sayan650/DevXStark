@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 
 export default function Header({ showClearButton, showFinishButton, handleClear, nodes, edges, flowSummary, selectedNode, handleDelete }) {
     const [isEditing, setIsEditing] = useState(false); // To track if we are editing
-    const [text, setText] = useState("Project Name");
+    const [text, setText] = useState("DevXStark");
     const [isCompileModalOpen, setIsCompileModalOpen] = useState(false);
     const showDeleteButton = !!selectedNode;
 
