@@ -1,141 +1,91 @@
-#[starknet::contract]
-mod contract {
-    use starknet::{
-        ContractAddress,
-        get_caller_address,
-        get_contract_address,
-        contract_address_const
-    };
-    use core::traits::Into;
-    use core::option::OptionTrait;
+  ```rust 
+use starknet::ContractAddress; 
 
-    #[storage]
-    struct Storage {
-        owner: ContractAddress,
-        paused: bool,
-        whitelist: LegacyMap<ContractAddress, bool>,
-        balances: LegacyMap<ContractAddress, u256>,
-        total_supply: u256,
-    }
+#[starknet::interface ]
+trait IContract<T ContractState> {
+    fn initialize(ref  self: TContractState, owner : ContractAddress);
+    fn set_ admin(ref self: TContractState, new _admin: ContractAddress);
+    fn  get_admin(self: @T ContractState) -> ContractAddress; 
+}
+
+#[starknet::contract ]
+mod contract {
+    use super:: ContractAddress;
+    use starknet: :{get_caller_address, contract_address_ const};
 
     #[event]
-    #[derive(Drop, starknet::Event)]
+    # [derive(Drop, starknet::Event )]
     enum Event {
-        Transfer: Transfer,
-        OwnershipTransferred: OwnershipTransferred,
-        PauseStateChanged: PauseStateChanged,
-        WhitelistUpdated: WhitelistUpdated,
+        AdminChange d: AdminChanged,
+        Initialized: Initialized, 
     }
 
-    #[derive(Drop, starknet::Event)]
-    struct Transfer {
-        from: ContractAddress,
-        to: ContractAddress,
-        amount: u256,
+    #[derive(Drop, stark net::Event)]
+    struct AdminChanged {
+        previous _admin: ContractAddress,
+        new _admin: ContractAddress,
+    } 
+
+    #[derive(Drop, stark net::Event)]
+    struct Initialized { 
+        admin: ContractAddress
     }
 
-    #[derive(Drop, starknet::Event)]
-    struct OwnershipTransferred {
-        previous_owner: ContractAddress,
-        new_owner: ContractAddress,
+    # [storage]
+    struct Storage {
+        initialize d: bool,
+        admin: ContractAddress ,
     }
 
-    #[derive(Drop, starknet::Event)]
-    struct PauseStateChanged {
-        state: bool,
+    #[constructor] 
+    fn constructor(ref self : ContractState) {
+        self .initialized.write(false);
+        self. admin.write(contract_address_const: :<0>());
     }
 
-    #[derive(Drop, starknet::Event)]
-    struct WhitelistUpdated {
-        account: ContractAddress,
-        status: bool,
-    }
-
-    #[constructor]
-    fn constructor(ref self: ContractState, initial_owner: ContractAddress) {
-        assert(!initial_owner.is_zero(), 'Owner cannot be zero');
-        self.owner.write(initial_owner);
-        self.paused.write(false);
-        self.total_supply.write(0);
-    }
-
-    #[external(v0)]
-    impl ContractImpl of super::IContract<ContractState> {
-        fn transfer(ref self: ContractState, to: ContractAddress, amount: u256) -> bool {
-            self.assert_not_paused();
-            let caller = get_caller_address();
-            self.assert_whitelisted(caller);
-            self.assert_whitelisted(to);
-            
-            assert(!to.is_zero(), 'Transfer to zero address');
-            let caller_balance = self.balances.read(caller);
-            assert(caller_balance >= amount, 'Insufficient balance');
-
-            self.balances.write(caller, caller_balance - amount);
-            self.balances.write(to, self.balances.read(to) + amount);
-
-            self.emit(Transfer { from: caller, to, amount });
-            true
+    #[generate _trait]
+    impl Internal  of InternalTrait {
+        fn  assert_only_admin(self:  @ContractState) {
+            let caller = get _caller_address();
+            assert(caller == self. admin.read(), 'Caller is not admin ');
         }
 
-        fn balance_of(self: @ContractState, account: ContractAddress) -> u256 {
-            self.balances.read(account)
-        }
+        fn assert_not _initialized(self: @ContractState)  {
+            assert(!self.initialized.rea d(), 'Already initialized');
+        } 
 
-        fn total_supply(self: @ContractState) -> u256 {
-            self.total_supply.read()
-        }
-
-        fn transfer_ownership(ref self: ContractState, new_owner: ContractAddress) {
-            self.assert_only_owner();
-            assert(!new_owner.is_zero(), 'New owner cannot be zero');
-            let previous_owner = self.owner.read();
-            self.owner.write(new_owner);
-            self.emit(OwnershipTransferred { previous_owner, new_owner });
-        }
-
-        fn set_pause(ref self: ContractState, state: bool) {
-            self.assert_only_owner();
-            self.paused.write(state);
-            self.emit(PauseStateChanged { state });
-        }
-
-        fn update_whitelist(ref self: ContractState, account: ContractAddress, status: bool) {
-            self.assert_only_owner();
-            assert(!account.is_zero(), 'Account cannot be zero');
-            self.whitelist.write(account, status);
-            self.emit(WhitelistUpdated { account, status });
-        }
-
-        fn is_whitelisted(self: @ContractState, account: ContractAddress) -> bool {
-            self.whitelist.read(account)
+        fn assert_valid_address (address: ContractAddress) {
+             assert(!address.is_zero(), 'Invalid address ');
         }
     }
 
-    #[generate_trait]
-    impl InternalFunctions of InternalFunctionsTrait {
-        fn assert_only_owner(self: @ContractState) {
-            let caller = get_caller_address();
-            assert(caller == self.owner.read(), 'Caller is not owner');
+    # [external(v0)]
+    impl  Contract of super::IContract<ContractState> { 
+        fn initialize(ref self: ContractState , owner: ContractAddress) {
+             self.assert_not_initialized();
+             Internal::assert_valid_address(owner); 
+
+            self.initialized.write(true);
+            self .admin.write(owner);
+
+            self .emit(Event::Initialized(Initialized { admin: owner  }));
         }
 
-        fn assert_not_paused(self: @ContractState) {
-            assert(!self.paused.read(), 'Contract is paused');
+        fn set_ admin(ref self: ContractState, new _admin: ContractAddress) {
+             self.assert_only_admin();
+             Internal::assert_valid_address(new_ admin);
+
+            let previous_admin = self .admin.read();
+            self.admin .write(new_admin);
+
+            self .emit(Event::AdminChanged(
+                AdminChanged {  previous_admin, new_admin }
+             ));
         }
 
-        fn assert_whitelisted(self: @ContractState, account: ContractAddress) {
-            assert(self.whitelist.read(account), 'Account not whitelisted');
+        fn get_ admin(self: @ContractState) ->  ContractAddress {
+            self.admin. read()
         }
     }
-}
-
-#[starknet::interface]
-trait IContract<TContractState> {
-    fn transfer(ref self: TContractState, to: ContractAddress, amount: u256) -> bool;
-    fn balance_of(self: @TContractState, account: ContractAddress) -> u256;
-    fn total_supply(self: @TContractState) -> u256;
-    fn transfer_ownership(ref self: TContractState, new_owner: ContractAddress);
-    fn set_pause(ref self: TContractState, state: bool);
-    fn update_whitelist(ref self: TContractState, account: ContractAddress, status: bool);
-    fn is_whitelisted(self: @TContractState, account: ContractAddress) -> bool;
-}
+} 
+```  
