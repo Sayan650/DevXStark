@@ -17,7 +17,6 @@ import {
   CredenzaBody,
   CredenzaClose,
   CredenzaContent,
-  CredenzaDescription,
   CredenzaHeader,
   CredenzaTitle,
 } from "@/components/credeza"
@@ -25,7 +24,6 @@ import { Plus } from 'lucide-react'
 
 const formSchema = z.object({
   blockName: z.string().min(1, "Block name is required"),
-  solidityCode: z.string().min(1, "Solidity code is required"),
 })
 
 interface CustomBlockModalProps {
@@ -39,7 +37,6 @@ export default function CustomBlock({ isOpen, onOpenChange, onSubmitCustomBlock 
     resolver: zodResolver(formSchema),
     defaultValues: {
       blockName: "",
-      solidityCode: "",
     },
   })
 
