@@ -132,7 +132,7 @@ Gas Optimization Requirements:
 - Cache frequently used values
 - Use appropriate data types
 
-Return only the contract code without explanations unless specifically requested. Code should be production-ready and follow all stated patterns.
+Return only the contract code without explanations unless specifically requested. Code should be production-ready and follow all stated patterns. Please make the contract name as 'contract' for example, mod contract{} .
 `,
                 // Enable caching for the prompt template
                 cache_control: { type: "ephemeral" }

@@ -71,25 +71,25 @@ export default async function handler(
         });
 
         // Extract corrected contract code
-        const correctedContractCode = parsedResult.corrected_contract_code;
+        // const correctedContractCode = parsedResult.corrected_contract_code;
 
         // Define file path
-        const filePath = path.join(process.cwd(), '../contracts/src', `lib.cairo`);
+        // const filePath = path.join(process.cwd(), '../../contracts/src', `lib.cairo`);
 
         // Ensure directory exists
-        fs.mkdirSync(path.dirname(filePath), { recursive: true });
+        // fs.mkdirSync(path.dirname(filePath), { recursive: true });
 
         // Write corrected contract code to file
-        fs.writeFileSync(filePath, correctedContractCode);
+        // fs.writeFileSync(filePath, correctedContractCode);
 
-        console.log(`Contract saved at: ${filePath}`);
+        // console.log(`Contract saved at: ${filePath}`);
 
-        // Send final success message
-        res.write(`data: ${JSON.stringify({
-            type: 'complete',
-            filePath,
-            success: true
-        })}\n\n`);
+        // // Send final success message
+        // res.write(`data: ${JSON.stringify({
+        //     type: 'complete',
+        //     filePath,
+        //     success: true
+        // })}\n\n`);
 
         // Close the stream
         res.end();

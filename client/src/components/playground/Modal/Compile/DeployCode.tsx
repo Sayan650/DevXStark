@@ -3,6 +3,25 @@ import { Button } from '../../../ui/button'
 import sample from './sample'
 export default function DeployCode({ setDisplayState }) {
     const [editable, setEditable] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const [logs, setLogs] = useState<string[]>([]);
+    const [result, setResult] = useState<DeploymentResponse | null>(null);
+    interface DeploymentResponse {
+        success: boolean;
+        contractAddress?: string;
+        classHash?: string;
+        transactionHash?: string;
+        error?: string;
+        details?: string;
+      }
+    const addLog = (message: string) => {
+        setLogs((prev) => [
+          ...prev,
+          `${new Date().toISOString().split("T")[1].split(".")[0]} - ${message}`,
+        ]);
+      };
+    
+    
     return (
         <>
             <div className='text-black text-2xl font-bold'>Contract Code</div>
@@ -29,5 +48,41 @@ export default function DeployCode({ setDisplayState }) {
             </div>
         </>)
     function deployContractHandler() {
+        setIsLoading(true);
+    setResult(null);
+    setLogs([]);
+    addLog("Starting deployment process...");
+
+    try {
+      addLog("Compiling and deploying contract...");
+      
+      const response = await fetch("/api/deploy-contract", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contractName: "contract_contract" }),
+      });
+      console.log("hit");
+
+      const data: DeploymentResponse = await response.json();
+      setResult(data);
+
+      if (data.success) {
+        addLog("✅ Deployment successful!");
+      } else {
+        addLog(`❌ Error: ${data.error}`);
+      }
+    } catch (error) {
+      addLog(
+        `❌ Error: ${error instanceof Error ? error.message : "Unknown error"}`
+      );
+      setResult({
+        success: false,
+        error: "Deployment failed",
+        details: error instanceof Error ? error.message : "Unknown error",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+
     }
 }

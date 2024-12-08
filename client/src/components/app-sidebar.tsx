@@ -10,6 +10,8 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
+import { useAccount } from "@starknet-react/core"
+import { ConnectButton, DisconnectButton } from "@/lib/Connect"
 
 // Menu items.
 const items = [
@@ -41,6 +43,8 @@ const items = [
 ]
 
 export function AppSidebar() {
+  const { account } = useAccount();
+
   return (
     <Sidebar>
       <SidebarContent>
@@ -59,6 +63,7 @@ export function AppSidebar() {
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
+            {account ? <DisconnectButton /> : <ConnectButton />}
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>

@@ -25,7 +25,7 @@ interface DeploymentResponse {
 }
 
 function getContractsPath(...paths: string[]) {
-  return path.join(process.cwd(), '..', 'contract', ...paths);
+  return path.join(process.cwd(), '..', 'contracts', ...paths);
 }
 
 async function compileCairo(): Promise<CompilationResult> {
